@@ -109,6 +109,7 @@
     });
 
     $(document).on('pjax:beforeSend', function() {
+      $dirtyForms = $("form").filter('.' + settings.dirtyClass);
       if ($dirtyForms.length) {
         return confirm(settings.message);
       }

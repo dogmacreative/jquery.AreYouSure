@@ -100,32 +100,50 @@
       }
     };
 
-    $(window).bind('beforeunload', function() {
-      $dirtyForms = $("form").filter('.' + settings.dirtyClass);
-      if ($dirtyForms.length > 0) {
-        // $dirtyForms.removeClass(settings.dirtyClass); // Prevent multiple calls?
-        return settings.message;
-      }
-    });
+    // $(window).bind('beforeunload', function() {
+    //   $dirtyForms = $("form").filter('.' + settings.dirtyClass);
+    //   if ($dirtyForms.length > 0) {
+    //     // $dirtyForms.removeClass(settings.dirtyClass); // Prevent multiple calls?
+    //     return settings.message;
+    //   }
+    // });
 
-    $(document).on('pjax:beforeSend', function() {
+    var beforeSend = function() {
       $dirtyForms = $("form").filter('.' + settings.dirtyClass);
       if ($dirtyForms.length) {
         return confirm(settings.message);
       }
-    });
+    };
 
-    return this.each(function(elem) {
-      if (!$(this).is('form')) {
-        return;
-      }
-      $(this).submit(function() {
-        $(this).removeClass(settings.dirtyClass);
+    $(document)
+      .on('pjax:beforeSend', beforeSend)
+      .on('pjax:start', function() {
+        $(document)
+          .off('pjax:beforeSend', beforeSend);
       });
 
-      $(this).find(settings.fieldSelector).each(storeOrigValue);
-      $(this).find(settings.fieldSelector).bind('change keyup', checkForm);
-      $(this).bind('reset', function() { markDirty($(this), false); });
+    return this.each(function(elem) {
+
+      var $form = $(this);
+
+      if (!$form.is('form')) {
+        return;
+      }
+
+      $form.submit(function() {
+        $form.removeClass(settings.dirtyClass);
+      });
+
+      $form
+        .on('click', ':submit', function(evt) {
+          $(this)
+            .parents('form')
+              .removeClass('dirty');
+        });
+
+      $form.find(settings.fieldSelector).each(storeOrigValue);
+      $form.find(settings.fieldSelector).bind('change keyup', checkForm);
+      $form.bind('reset', function() { markDirty($(this), false); });
     });
   };
 })(jQuery);
